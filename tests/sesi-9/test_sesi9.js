@@ -1,9 +1,11 @@
-const { Builder, By, until } = require('selenium-webdriver');
-const assert = require('assert');
-const chrome = require('selenium-webdriver/chrome');
+import { Builder, By, until } from 'selenium-webdriver';
+import assert from 'assert';
+import chrome from 'selenium-webdriver/chrome.js';
 
-const page_login = require('../../pages/page_login')
-const fs = require('fs')
+import fs from 'fs';
+import { PNG } from "pngjs";
+import pixelmatch from "pixelmatch";
+import page_login from '../../pages/page_login.js';
 
 describe('Google Search Test', function () {
     let driver;
@@ -78,5 +80,44 @@ describe('Google Search Test', function () {
         fs.writeFileSync("inputusername.png", Buffer.from(ss_inputusername, "base64"));
 
         driver.quit();
+    })
+
+    it.only('Cek Visual halaman login', async function () {
+        // visit page
+        driver = await new Builder().forBrowser('chrome').build();
+        await driver.get('https://www.saucedemo.com');
+
+        const title = await driver.getTitle();
+        assert.strictEqual(title, 'Swag Labs');
+
+        // screenshot keadaan login page sekarang, current.png
+        let screenshot = await driver.takeScreenshot();
+        let imgBuffer = Buffer.from(screenshot, "base64");
+        fs.writeFileSync("current.png", imgBuffer);
+
+        // ambil baseline untuk komparasi
+        // jika belum ada baseline, jadikan current.png sebagai baseline
+        if (!fs.existsSync("baseline.png")) {
+            fs.copyFileSync("current.png", "baseline.png");
+            console.log("Baseline image saved.");
+        }
+
+        // Compare baseline.png dan current.png apakah sama
+        let img1 = PNG.sync.read(fs.readFileSync("baseline.png"));
+        let img2 = PNG.sync.read(fs.readFileSync("current.png"));
+        let { width, height } = img1;
+        let diff = new PNG({ width, height });
+
+        let numDiffPixels = pixelmatch(img1.data, img2.data, diff.data, width, height, { threshold: 0.1 });
+
+        fs.writeFileSync("diff.png", PNG.sync.write(diff));
+
+        if (numDiffPixels > 0) {
+            console.log(`Visual differences found! Pixels different: ${numDiffPixels}`);
+        } else {
+            console.log("No visual differences found.");
+        }
+
+        driver.quit()
     })
 });

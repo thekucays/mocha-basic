@@ -1,4 +1,4 @@
-const { By } = require("selenium-webdriver");
+import { By } from "selenium-webdriver";
 
 class PageLogin {
     static inputUsername = By.css('[data-test="username"]');
@@ -6,4 +6,7 @@ class PageLogin {
     static buttonLogin = By.className('submit-button btn_action');
 }
 
-module.exports = PageLogin;
+// module.exports = PageLogin;
+
+// pakai ini buat ESM support
+export default PageLogin;

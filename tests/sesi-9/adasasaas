@@ -1,0 +1,45 @@
+const { Builder, By } = require("selenium-webdriver");
+const fs = require("fs");
+const { PNG } = require("pngjs");
+const pixelmatch = require("pixelmatch");
+
+async function visualTest() {
+    let driver = await new Builder().forBrowser("chrome").build();
+    try {
+        await driver.get("https://example.com");
+
+        // Capture screenshot
+        let screenshot = await driver.takeScreenshot();
+        let imgBuffer = Buffer.from(screenshot, "base64");
+
+        // Save the screenshot
+        fs.writeFileSync("current.png", imgBuffer);
+
+        // Load baseline image for comparison
+        if (!fs.existsSync("baseline.png")) {
+            fs.copyFileSync("current.png", "baseline.png");
+            console.log("Baseline image saved.");
+            return;
+        }
+
+        // Compare images
+        let img1 = PNG.sync.read(fs.readFileSync("baseline.png"));
+        let img2 = PNG.sync.read(fs.readFileSync("current.png"));
+        let { width, height } = img1;
+        let diff = new PNG({ width, height });
+
+        let numDiffPixels = pixelmatch(img1.data, img2.data, diff.data, width, height, { threshold: 0.1 });
+
+        fs.writeFileSync("diff.png", PNG.sync.write(diff));
+
+        if (numDiffPixels > 0) {
+            console.log(`Visual differences found! Pixels different: ${numDiffPixels}`);
+        } else {
+            console.log("No visual differences found.");
+        }
+    } finally {
+        await driver.quit();
+    }
+}
+
+visualTest();
