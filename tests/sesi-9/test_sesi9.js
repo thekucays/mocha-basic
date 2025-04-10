@@ -63,5 +63,7 @@ describe('Google Search Test', function () {
         await driver.get('https://www.saucedemo.com');
         const title = await driver.getTitle();
 
+        await driver.quit()
+
     })
 });
