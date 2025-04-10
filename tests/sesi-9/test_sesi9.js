@@ -10,16 +10,8 @@ import page_login from '../../pages/page_login.js';
 describe('Google Search Test', function () {
     let driver;
 
-// before(async function () {
-//     driver = await new Builder().forBrowser('chrome').build();
-// });
-
-// after(async function () {
-//     await driver.quit();
-// });
-
     it('Visit SauceDemo dan cek page title', async function () {
-        options = new chrome.Options();
+        let options = new chrome.Options();
         driver = await new Builder().forBrowser('chrome').build();
 
         // driver = await new Builder().forBrowser('chrome').build();
@@ -60,7 +52,7 @@ describe('Google Search Test', function () {
     });
 
     it('Visit SauceDemo dan cek page title', async function () {
-        options = new chrome.Options();
+        let options = new chrome.Options();
         options.addArguments("--headless");
 
         driver = await new Builder().forBrowser('firefox').setChromeOptions(options).build();
