@@ -6,14 +6,6 @@ const firefox = require('selenium-webdriver/firefox');
 describe('Google Search Test', function () {
     let driver;
 
-// before(async function () {
-//     driver = await new Builder().forBrowser('chrome').build();
-// });
-
-// after(async function () {
-//     await driver.quit();
-// });
-
     it('Headless Chrome - Visit SauceDemo dan cek page title', async function () {
         options = new chrome.Options();
         options.addArguments("--headless");
