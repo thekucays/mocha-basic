@@ -5,6 +5,7 @@
     "description": "Selenium WebDriver tests using Mocha with Mochawesome reports",
     "scripts": {
         "test": "mocha tests --recursive --timeout 60000",
+        "test-visual": "mocha tests/sesi-11/test_sesi11.js --recursive --timeout 60000",
         "test-parallel": "mocha tests --parallel --recursive --timeout 60000",
         "test-pertama": "mocha tests --grep 'Pertama' --recursive --timeout 60000",
         "jalanin-mochawesome": "mocha tests --recursive --timeout 60000 --reporter mochawesome",

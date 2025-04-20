@@ -74,7 +74,7 @@ describe('Google Search Test', function () {
         driver.quit();
     })
 
-    it('Cek Visual halaman login', async function () {
+    it.only('Cek Visual halaman login', async function () {
         // visit page
         driver = await new Builder().forBrowser('chrome').build();
         await driver.get('https://www.saucedemo.com');
