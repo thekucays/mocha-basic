@@ -15,7 +15,11 @@ describe('Google Search Test', function () {
 
     it('Visit SauceDemo dan cek page title', async function () {
         options = new chrome.Options();
-        driver = await new Builder().forBrowser('chrome').build();
+        options.addArguments('--incognito'); // option ke chrome supaya gaada popup password nya
+        driver = await new Builder()
+            .forBrowser('chrome')
+            .setChromeOptions(options)
+            .build();
 
         // driver = await new Builder().forBrowser('chrome').build();
 
@@ -49,6 +53,13 @@ describe('Google Search Test', function () {
         assert.strictEqual(logotext, 'Swag Labs')
 
         await driver.sleep(1700)
+
+        // dropdown search
+        let dropdownSort = await driver.findElement(By.xpath('//select[@data-test="product-sort-container"]'))
+        await dropdownSort.click()
+        let option = await driver.findElement(By.xpath('//option[text()="Price (low to high)"]'));
+        await option.click();
+
         await driver.quit();
     });
 
