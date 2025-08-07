@@ -10,6 +10,14 @@ import page_login from '../../pages/page_login.js';
 describe('Google Search Test', function () {
     let driver;
 
+    // hook afterEach buat screenshot jika test gagal
+    afterEach(async function() {
+        if (this.currentTest.state === 'failed') {
+            let ss_full = await driver.takeScreenshot();
+            fs.writeFileSync("ss failed: " + this.currentTest.title + ".png", Buffer.from(ss_full, "base64")); // Or your desired path
+        }
+    });
+
     it('Visit SauceDemo dan cek page title', async function () {
         let options = new chrome.Options();
         driver = await new Builder().forBrowser('chrome').build();
