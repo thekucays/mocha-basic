@@ -1,0 +1,102 @@
+pipeline {
+    agent any
+    
+    tools {
+        nodejs 'NodeJS 18'
+    }
+    
+    environment {
+        CHROME_HEADLESS = 'true'
+        FIREFOX_HEADLESS = 'true'
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                echo 'Using local workspace'
+            }
+        }
+        
+        stage('Setup') {
+            steps {
+                script {
+                    echo 'Installing dependencies...'
+                    bat 'npm install'
+                    
+                    echo 'Checking Node.js version...'
+                    bat 'node --version'
+                    bat 'npm --version'
+                }
+            }
+        }
+        
+        stage('Run Tests') {
+            steps {
+                script {
+                    echo 'Running Selenium tests...'
+                    
+                    // Run all tests
+                    bat 'npm test'
+                    
+                    // Run visual tests specifically
+                    bat 'npm run test-visual'
+                    
+                    // Generate HTML reports
+                    bat 'npm run jalanin-mochawesome'
+                    bat 'npm run jalanin-simple-html'
+                }
+            }
+            post {
+                always {
+                    // Archive test results and screenshots
+                    archiveArtifacts artifacts: '*.png', allowEmptyArchive: true
+                    archiveArtifacts artifacts: 'mochawesome-report/**/*', allowEmptyArchive: true
+                    archiveArtifacts artifacts: 'report.html', allowEmptyArchive: true
+                    
+                    // Publish HTML reports
+                    publishHTML([
+                        allowMissing: true,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: 'mochawesome-report',
+                        reportFiles: 'mochawesome.html',
+                        reportName: 'Mochawesome Report'
+                    ])
+                    
+                    publishHTML([
+                        allowMissing: true,
+                        alwaysLinkToLastBuild: true,
+                        keepAll: true,
+                        reportDir: '.',
+                        reportFiles: 'report.html',
+                        reportName: 'Simple HTML Report'
+                    ])
+                }
+            }
+        }
+        
+        stage('Cleanup') {
+            steps {
+                script {
+                    echo 'Cleaning up workspace...'
+                    // Clean up generated files using PowerShell
+                    bat 'if exist *.png del *.png'
+                    bat 'if exist mochawesome-report rmdir /s /q mochawesome-report'
+                    bat 'if exist report.html del report.html'
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            echo 'Build completed!'
+        }
+        success {
+            echo 'All tests passed! 🎉'
+        }
+        failure {
+            echo 'Some tests failed! ❌'
+        }
+    }
+} 
