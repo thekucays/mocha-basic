@@ -13,16 +13,25 @@ describe('Google Search Test', function () {
     // hook afterEach buat screenshot jika test gagal
     afterEach(async function() {
         if (this.currentTest.state === 'failed') {
-            let ss_full = await driver.takeScreenshot();
-            fs.writeFileSync("ss failed: " + this.currentTest.title + ".png", Buffer.from(ss_full, "base64")); // Or your desired path
+            try {
+                let ss_full = await driver.takeScreenshot();
+                fs.writeFileSync("ss failed: " + this.currentTest.title + ".png", Buffer.from(ss_full, "base64"));
+            } catch (error) {
+                console.log('Failed to take screenshot:', error.message);
+            }
+        }
+        if (driver) {
+            await driver.quit();
         }
     });
 
     it('Visit SauceDemo dan cek page title', async function () {
         let options = new chrome.Options();
-        driver = await new Builder().forBrowser('chrome').build();
-
-        // driver = await new Builder().forBrowser('chrome').build();
+        options.addArguments('--no-sandbox');
+        options.addArguments('--disable-dev-shm-usage');
+        options.addArguments('--disable-gpu');
+        
+        driver = await new Builder().forBrowser('chrome').setChromeOptions(options).build();
 
         await driver.get('https://www.saucedemo.com');
         const title = await driver.getTitle();
@@ -56,19 +65,21 @@ describe('Google Search Test', function () {
         assert.strictEqual(logotext, 'Swag Labs')
 
         await driver.sleep(1700)
-        await driver.quit();
     });
 
-    it('Visit SauceDemo dan cek page title', async function () {
+    it('Take screenshots of SauceDemo page', async function () {
         let options = new chrome.Options();
-        options.addArguments("--headless");
+        options.addArguments('--no-sandbox');
+        options.addArguments('--disable-dev-shm-usage');
+        options.addArguments('--disable-gpu');
 
-        driver = await new Builder().forBrowser('firefox').setChromeOptions(options).build();
-
-        // driver = await new Builder().forBrowser('chrome').build();
+        driver = await new Builder().forBrowser('chrome').setChromeOptions(options).build();
 
         await driver.get('https://www.saucedemo.com');
         const title = await driver.getTitle();
+
+        // Wait for page to load completely
+        await driver.sleep(2000);
 
         // full screenshot
         let ss_full = await driver.takeScreenshot();
@@ -78,17 +89,23 @@ describe('Google Search Test', function () {
         let inputUsernamePOM = await driver.findElement(page_login.inputUsername)
         let ss_inputusername = await inputUsernamePOM.takeScreenshot();
         fs.writeFileSync("inputusername.png", Buffer.from(ss_inputusername, "base64"));
-
-        driver.quit();
     })
 
     it('Cek Visual halaman login', async function () {
         // visit page
-        driver = await new Builder().forBrowser('chrome').build();
+        let options = new chrome.Options();
+        options.addArguments('--no-sandbox');
+        options.addArguments('--disable-dev-shm-usage');
+        options.addArguments('--disable-gpu');
+        
+        driver = await new Builder().forBrowser('chrome').setChromeOptions(options).build();
         await driver.get('https://www.saucedemo.com');
 
         const title = await driver.getTitle();
         assert.strictEqual(title, 'Swag Labs');
+
+        // Wait for page to load completely
+        await driver.sleep(2000);
 
         // screenshot keadaan login page sekarang, current.png
         let screenshot = await driver.takeScreenshot();
@@ -114,10 +131,10 @@ describe('Google Search Test', function () {
 
         if (numDiffPixels > 0) {
             console.log(`Visual differences found! Pixels different: ${numDiffPixels}`);
+            // For visual testing, you might want to fail the test if differences are found
+            // assert.strictEqual(numDiffPixels, 0, `Visual differences found: ${numDiffPixels} pixels different`);
         } else {
             console.log("No visual differences found.");
         }
-
-        driver.quit()
     })
 });

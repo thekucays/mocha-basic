@@ -1,0 +1,32 @@
+services:
+  jenkins:
+    build: .
+    container_name: jenkins-selenium
+    restart: unless-stopped
+    ports:
+      - "8081:8080"      # Jenkins web interface
+      - "50000:50000"    # Jenkins agent port
+      - "5900:5900"      # VNC port for debugging
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./workspace:/var/jenkins_home/workspace
+      - .:/var/jenkins_home/workspace/selenium-mocha-test-ds
+    environment:
+      - DISPLAY=:99
+      - CHROME_HEADLESS=true
+      - FIREFOX_HEADLESS=true
+      - NODE_ENV=production
+      - JAVA_OPTS=-Xmx4g -Xms2g
+    privileged: true
+    shm_size: '4gb'  # Increase shared memory for Chrome
+    mem_limit: '6g'
+    cpus: '2.0'
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+
+volumes:
+  jenkins_home:
+    driver: local 

@@ -1,0 +1,103 @@
+pipeline {
+    agent any
+    
+    environment {
+        DISPLAY = ':99'
+        CHROME_HEADLESS = 'true'
+        FIREFOX_HEADLESS = 'true'
+        NODE_ENV = 'production'
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                echo 'Using local workspace'
+            }
+        }
+        
+        stage('Setup') {
+            steps {
+                script {
+                    echo 'Checking Node.js version...'
+                    sh 'node --version'
+                    sh 'npm --version'
+                    
+                    echo 'Installing dependencies...'
+                    sh 'npm install'
+                    
+                    echo 'Updating ChromeDriver to match Chrome version...'
+                    sh 'wget -O /tmp/chromedriver.zip https://edgedl.me.gvt1.com/edgedl/chrome/chrome-for-testing/139.0.7258.127/linux64/chromedriver-linux64.zip'
+                    sh 'unzip -o /tmp/chromedriver.zip -d /tmp/'
+                    sh 'sudo mv /tmp/chromedriver-linux64/chromedriver /usr/local/bin/'
+                    sh 'sudo chmod +x /usr/local/bin/chromedriver'
+                    sh 'rm -rf /tmp/chromedriver.zip /tmp/chromedriver-linux64'
+                    
+                    echo 'Checking browser drivers...'
+                    sh 'chromedriver --version'
+                    sh 'geckodriver --version'
+                }
+            }
+        }
+        
+        stage('Run Tests') {
+            steps {
+                script {
+                    echo 'Cleaning up Xvfb...'
+                    sh 'pkill Xvfb || true'
+                    sh 'rm -f /tmp/.X99-lock || true'
+                    sh 'sleep 2'
+                    
+                    echo 'Starting Xvfb for GUI support...'
+                    sh 'Xvfb :99 -screen 0 1024x768x24 &'
+                    sh 'sleep 3'
+                    
+                    echo 'Running Selenium tests...'
+                    
+                    // Run all tests using local mocha
+                    sh 'npx mocha tests --recursive --timeout 60000'
+                    
+                    // Run visual tests specifically
+                    sh 'npm run test-visual'
+                    
+                    // Generate HTML reports
+                    sh 'npm run jalanin-mochawesome'
+                    sh 'npm run jalanin-simple-html'
+                }
+            }
+            post {
+                always {
+                    // Archive test results and screenshots
+                    archiveArtifacts artifacts: '*.png', allowEmptyArchive: true
+                    archiveArtifacts artifacts: 'mochawesome-report/**/*', allowEmptyArchive: true
+                    archiveArtifacts artifacts: 'report.html', allowEmptyArchive: true
+                }
+            }
+        }
+        
+        stage('Cleanup') {
+            steps {
+                script {
+                    echo 'Cleaning up workspace...'
+                    sh 'rm -f *.png || true'
+                    sh 'rm -rf mochawesome-report || true'
+                    sh 'rm -f report.html || true'
+                    
+                    echo 'Stopping Xvfb...'
+                    sh 'pkill Xvfb || true'
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            echo 'Build completed!'
+        }
+        success {
+            echo 'All tests passed! 🎉'
+        }
+        failure {
+            echo 'Some tests failed! ❌'
+        }
+    }
+}
