@@ -1,10 +1,6 @@
 pipeline {
     agent any
     
-    tools {
-        nodejs 'NodeJS 18'
-    }
-    
     environment {
         DISPLAY = ':99'
         CHROME_HEADLESS = 'true'
@@ -15,23 +11,19 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                // For local workspace
                 echo 'Using local workspace'
-                
-                // If using Git, uncomment:
-                // checkout scm
             }
         }
         
         stage('Setup') {
             steps {
                 script {
-                    echo 'Installing dependencies...'
-                    sh 'npm install'
-                    
                     echo 'Checking Node.js version...'
                     sh 'node --version'
                     sh 'npm --version'
+                    
+                    echo 'Installing dependencies...'
+                    sh 'npm install'
                     
                     echo 'Checking browser drivers...'
                     sh 'chromedriver --version'
@@ -43,21 +35,26 @@ pipeline {
         stage('Run Tests') {
             steps {
                 script {
+                    echo 'Cleaning up Xvfb...'
+                    sh 'pkill Xvfb || true'
+                    sh 'rm -f /tmp/.X99-lock || true'
+                    sh 'sleep 2'
+                    
                     echo 'Starting Xvfb for GUI support...'
                     sh 'Xvfb :99 -screen 0 1024x768x24 &'
-                    sh 'sleep 2'
+                    sh 'sleep 3'
                     
                     echo 'Running Selenium tests...'
                     
-                    // Run all tests
-                    sh 'npm test'
+                    // Run all tests using local mocha
+                    sh 'npx mocha tests --recursive --timeout 60000'
                     
                     // Run visual tests specifically
-                    sh 'npm run test-visual'
+                    sh 'npx mocha tests/sesi-11/test_sesi11.js --recursive --timeout 60000'
                     
-                    // Generate HTML reports
-                    sh 'npm run jalanin-mochawesome'
-                    sh 'npm run jalanin-simple-html'
+                    // Generate HTML reports using node_modules path
+                    sh 'npx mocha tests --recursive --timeout 60000 --reporter node_modules/mochawesome/mochawesome.js'
+                    sh 'npx mocha tests --recursive --timeout 60000 --reporter node_modules/mocha-simple-html-reporter/lib/reporter.js --reporter-options output=report.html'
                 }
             }
             post {
@@ -96,6 +93,9 @@ pipeline {
                     sh 'rm -f *.png || true'
                     sh 'rm -rf mochawesome-report || true'
                     sh 'rm -f report.html || true'
+                    
+                    echo 'Stopping Xvfb...'
+                    sh 'pkill Xvfb || true'
                 }
             }
         }
