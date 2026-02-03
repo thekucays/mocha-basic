@@ -22,11 +22,14 @@ describe("API Test Suite coba", function(){
 
         const hasilpost = await fetch('https://reqres.in/api/users', {
             method: 'POST',
-            headers: {"Content-Type": "application/json"},
+            headers: {
+                "Content-Type": "application/json",
+                "x-api-key": "reqres_73cf8090ed9d410ab8e0ad831e50df00"
+            },
             body: JSON.stringify(newPost)
         })
 
-        expect(hasilpost.status).to.equal(90000000)
+        expect(hasilpost.status).to.equal(201)
 
         // validasi json schema
         const ajv = new Ajv()
